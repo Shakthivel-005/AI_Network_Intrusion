@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Launcher for the AI-NIDS GUI.
+APP="${NIDS_APP_DIR:-/opt/nids}"
+PORT="${NIDS_PORT:-8501}"
+export STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+export PYTHONWARNINGS=ignore
+
+case "${1:-}" in
+  demo|selftest)  cd "$APP" && exec "$APP/venv/bin/python" -m nids.cli "$1" ;;
+  --repair)       exec sudo "$APP/venv/bin/pip" install --upgrade -r "$APP/requirements.txt" ;;
+  --version)      cd "$APP" && exec "$APP/venv/bin/python" -c "import nids; print(nids.__version__)" ;;
+  -h|--help)      echo "usage: nids-gui            start the dashboard (http://127.0.0.1:$PORT)"
+                  echo "       nids-gui demo       train on demo data + create alerts (no GUI)"
+                  echo "       nids-gui --repair   reinstall Python dependencies"
+                  exit 0 ;;
+esac
+
+echo "Starting AI-NIDS on http://127.0.0.1:$PORT  (Ctrl+C to stop)"
+( sleep 4; xdg-open "http://127.0.0.1:$PORT" >/dev/null 2>&1 || true ) &
+exec "$APP/venv/bin/streamlit" run "$APP/app.py" \
+     --server.address 127.0.0.1 --server.port "$PORT" --server.headless true \
+     --server.maxUploadSize 2000 --browser.gatherUsageStats false
